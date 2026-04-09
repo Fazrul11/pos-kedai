@@ -5,67 +5,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>POS Kedai Makan</title>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
-
 <style>
-body{
-    font-family: Arial;
-    margin:0;
-    background:#f4f4f4;
-}
+body{font-family:Arial;margin:0;background:#f4f4f4;}
+.header{background:#2e7d32;color:white;padding:15px;text-align:center;font-size:20px;}
 
-.header{
-    background:#2e7d32;
-    color:white;
-    padding:15px;
-    text-align:center;
-    font-size:20px;
-}
+.container{display:flex;flex-wrap:wrap;}
 
-.container{
-    display:flex;
-    flex-wrap:wrap;
-}
-
-.menu, .cashier{
-    flex:1;
-    min-width:300px;
-    padding:10px;
-}
+.menu,.cashier{flex:1;min-width:300px;padding:10px;}
 
 .card{
-    background:white;
-    padding:15px;
-    margin:10px;
-    border-radius:10px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+  background:white;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+  box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
+
+img{width:100%;height:120px;object-fit:cover;border-radius:10px;}
 
 button{
-    padding:10px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    margin-top:5px;
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border:none;
+  border-radius:8px;
+  background:#43a047;
+  color:white;
+  font-size:16px;
 }
 
-.orderBtn{
-    background:#43a047;
-    color:white;
+.delete{
+  background:#e53935;
 }
 
-.deleteBtn{
-    background:#e53935;
-    color:white;
-}
-
+h3{text-align:center;}
 </style>
 </head>
 
 <body>
 
-<div class="header">🍽️ POS KEDAI MAKAN REAL-TIME</div>
+<div class="header">🍽️ POS KEDAI MAKAN</div>
 
 <div class="container">
 
@@ -74,21 +53,15 @@ button{
 <h3>Menu</h3>
 
 <div class="card">
-Nasi Goreng - RM6
-<br>
-<button class="orderBtn" onclick="order('Nasi Goreng',6)">Order</button>
+<img src="https://images.unsplash.com/photo-1604908176997-125f25cc500f">
+<b>Nasi Goreng</b><br>RM6
+<button onclick="order('Nasi Goreng',6)">Order</button>
 </div>
 
 <div class="card">
-Teh Ais - RM2.50
-<br>
-<button class="orderBtn" onclick="order('Teh Ais',2.5)">Order</button>
-</div>
-
-<div class="card">
-Mee Goreng - RM5
-<br>
-<button class="orderBtn" onclick="order('Mee Goreng',5)">Order</button>
+<img src="https://images.unsplash.com/photo-1605478581570-3b6a3b6c7b5d">
+<b>Teh Ais</b><br>RM2.50
+<button onclick="order('Teh Ais',2.5)">Order</button>
 </div>
 
 </div>
@@ -101,8 +74,14 @@ Mee Goreng - RM5
 
 </div>
 
-<script>
-// 🔥 FIREBASE CONFIG (KAU PUNYA)
+<!-- FIREBASE -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+// 🔥 CONFIG KAU (DAH BETUL)
 const firebaseConfig = {
   apiKey: "AIzaSyB4pceskA3HlPwfF9GOsWzuJ2vKQ-pfjQY",
   authDomain: "pos-kedai-95034.firebaseapp.com",
@@ -114,42 +93,45 @@ const firebaseConfig = {
   measurementId: "G-9SYMMD3D5Y"
 };
 
-// INIT FIREBASE
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-// 📱 HANTAR ORDER
-function order(item, price){
-    db.ref("orders").push({
-        item: item,
-        price: price,
-        time: new Date().toLocaleTimeString()
-    });
+// 📱 SUBMIT ORDER (INI YANG KAU NAK)
+window.order = function(item, price){
+  push(ref(db,"orders"),{
+    item:item,
+    price:price,
+    time:new Date().toLocaleTimeString()
+  });
+
+  alert("Order dihantar!");
 }
-
-// 💻 LIVE CASHIER
-db.ref("orders").on("value", snapshot => {
-    let data = snapshot.val();
-    let box = document.getElementById("orders");
-    box.innerHTML = "";
-
-    for(let id in data){
-        box.innerHTML += `
-        <div class="card">
-            <b>${data[id].item}</b><br>
-            RM ${data[id].price}<br>
-            <small>${data[id].time}</small><br>
-
-            <button class="deleteBtn" onclick="delOrder('${id}')">Delete</button>
-        </div>
-        `;
-    }
-});
 
 // 🗑 DELETE ORDER
-function delOrder(id){
-    db.ref("orders/" + id).remove();
+window.delOrder = function(id){
+  remove(ref(db,"orders/"+id));
 }
+
+// 💻 LIVE UPDATE CASHIER
+onValue(ref(db,"orders"), (snapshot)=>{
+  const data = snapshot.val();
+  const box = document.getElementById("orders");
+
+  box.innerHTML = "";
+
+  if(data){
+    for(let id in data){
+      box.innerHTML += `
+      <div class="card">
+        <b>${data[id].item}</b><br>
+        RM ${data[id].price}<br>
+        <small>${data[id].time}</small><br>
+        <button class="delete" onclick="delOrder('${id}')">Delete</button>
+      </div>
+      `;
+    }
+  }
+});
 
 </script>
 
