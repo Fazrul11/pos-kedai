@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>POS Kedai Makan</title>
+    <style>
+        body { font-family: Arial; text-align: center; }
+        button { padding: 15px; margin: 5px; font-size: 16px; }
+        #cart { margin-top: 20px; }
+    </style>
+</head>
+
+<body>
+
+<h1>POS Kedai Makan</h1>
+
+<button onclick="addItem('Nasi Goreng', 6)">Nasi Goreng</button>
+<button onclick="addItem('Teh Ais', 2.5)">Teh Ais</button>
+
+<div id="cart"></div>
+<h2 id="total">Total: RM 0.00</h2>
+
+<button onclick="pay()">Bayar</button>
+
+<script>
+let cart = [];
+
+function addItem(name, price) {
+    let item = cart.find(i => i.name === name);
+    if (item) {
+        item.qty++;
+    } else {
+        cart.push({ name: name, price: price, qty: 1 });
+    }
+    render();
+}
+
+function render() {
+    let cartDiv = document.getElementById("cart");
+    cartDiv.innerHTML = "";
+    let total = 0;
+
+    cart.forEach(item => {
+        let line = document.createElement("div");
+        line.innerText = item.name + " x" + item.qty + " = RM " + (item.price * item.qty);
+        cartDiv.appendChild(line);
+        total += item.price * item.qty;
+    });
+
+    document.getElementById("total").innerText = "Total: RM " + total.toFixed(2);
+}
+
+function pay() {
+    alert("Bayaran berjaya!");
+    cart = [];
+    render();
+}
+</script>
+
+</body>
+</html>
