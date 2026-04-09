@@ -2,207 +2,155 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>POS Kedai Makan Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS Kedai Makan</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
 
 <style>
-body {
+body{
     font-family: Arial;
-    margin: 0;
-    background: #f1f3f6;
+    margin:0;
+    background:#f4f4f4;
 }
 
-/* HEADER */
-.header {
-    background: linear-gradient(90deg,#1b5e20,#43a047);
-    color: white;
-    padding: 15px;
-    text-align: center;
-    font-size: 22px;
+.header{
+    background:#2e7d32;
+    color:white;
+    padding:15px;
+    text-align:center;
+    font-size:20px;
 }
 
-/* FONT CONTROL */
-.controls {
-    text-align: center;
-    padding: 10px;
+.container{
+    display:flex;
+    flex-wrap:wrap;
 }
 
-button {
-    padding: 10px;
-    margin: 5px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
+.menu, .cashier{
+    flex:1;
+    min-width:300px;
+    padding:10px;
 }
 
-/* MENU GRID */
-.container {
-    display: flex;
-    flex-wrap: wrap;
+.card{
+    background:white;
+    padding:15px;
+    margin:10px;
+    border-radius:10px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-.menu, .cart {
-    flex: 1;
-    min-width: 300px;
-    padding: 10px;
+button{
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin-top:5px;
 }
 
-/* ITEM CARD */
-.card {
-    background: white;
-    margin: 10px;
-    padding: 15px;
-    border-radius: 15px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    text-align: center;
+.orderBtn{
+    background:#43a047;
+    color:white;
 }
 
-/* IMAGE */
-.card img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 10px;
+.deleteBtn{
+    background:#e53935;
+    color:white;
 }
 
-/* BUTTON COLORS */
-.add { background:#4caf50; color:white; }
-.plus { background:#2196f3; color:white; }
-.minus { background:#ff9800; color:white; }
-.delete { background:#f44336; color:white; }
-
-/* TOTAL */
-.total {
-    font-size: 24px;
-    font-weight: bold;
-    text-align: right;
-    margin: 10px;
-}
 </style>
 </head>
 
 <body>
 
-<div class="header">🍽️ POS KEDAI MAKAN PRO</div>
-
-<!-- FONT SIZE CONTROL -->
-<div class="controls">
-    <button onclick="changeFont(12)">A-</button>
-    <button onclick="changeFont(16)">A</button>
-    <button onclick="changeFont(20)">A+</button>
-</div>
+<div class="header">🍽️ POS KEDAI MAKAN REAL-TIME</div>
 
 <div class="container">
 
 <!-- MENU -->
 <div class="menu">
-    <h3>Menu</h3>
+<h3>Menu</h3>
 
-    <div class="card">
-        <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d">
-        <h4>Nasi Goreng</h4>
-        RM6
-        <br>
-        <button class="add" onclick="add('Nasi Goreng',6)">Tambah</button>
-    </div>
+<div class="card">
+Nasi Goreng - RM6
+<br>
+<button class="orderBtn" onclick="order('Nasi Goreng',6)">Order</button>
+</div>
 
-    <div class="card">
-        <img src="https://images.unsplash.com/photo-1544145945-f90425340c7e">
-        <h4>Teh Ais</h4>
-        RM2.50
-        <br>
-        <button class="add" onclick="add('Teh Ais',2.5)">Tambah</button>
-    </div>
+<div class="card">
+Teh Ais - RM2.50
+<br>
+<button class="orderBtn" onclick="order('Teh Ais',2.5)">Order</button>
+</div>
 
-    <div class="card">
-        <img src="https://images.unsplash.com/photo-1606756790138-261d2b21cd75">
-        <h4>Mee Goreng</h4>
-        RM5
-        <br>
-        <button class="add" onclick="add('Mee Goreng',5)">Tambah</button>
-    </div>
+<div class="card">
+Mee Goreng - RM5
+<br>
+<button class="orderBtn" onclick="order('Mee Goreng',5)">Order</button>
+</div>
 
 </div>
 
-<!-- CART -->
-<div class="cart">
-    <h3>Order</h3>
-    <div id="cart"></div>
-
-    <div class="total" id="total">Total: RM0.00</div>
-
-    <button class="delete" onclick="clearCart()">Clear</button>
+<!-- CASHIER -->
+<div class="cashier">
+<h3>📥 Order Masuk (LIVE)</h3>
+<div id="orders"></div>
 </div>
 
 </div>
 
 <script>
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+// 🔥 FIREBASE CONFIG (KAU PUNYA)
+const firebaseConfig = {
+  apiKey: "AIzaSyB4pceskA3HlPwfF9GOsWzuJ2vKQ-pfjQY",
+  authDomain: "pos-kedai-95034.firebaseapp.com",
+  databaseURL: "https://pos-kedai-95034-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pos-kedai-95034",
+  storageBucket: "pos-kedai-95034.firebasestorage.app",
+  messagingSenderId: "311237939351",
+  appId: "1:311237939351:web:d3e3f1571204bbdad999d2",
+  measurementId: "G-9SYMMD3D5Y"
+};
 
-function save(){
-    localStorage.setItem("cart", JSON.stringify(cart));
+// INIT FIREBASE
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 📱 HANTAR ORDER
+function order(item, price){
+    db.ref("orders").push({
+        item: item,
+        price: price,
+        time: new Date().toLocaleTimeString()
+    });
 }
 
-function add(name, price){
-    let item = cart.find(i => i.name === name);
-
-    if(item){
-        item.qty++;
-    } else {
-        cart.push({name, price, qty:1});
-    }
-
-    save();
-    render();
-}
-
-function remove(name){
-    cart = cart.filter(i => i.name !== name);
-    save();
-    render();
-}
-
-function render(){
-    let box = document.getElementById("cart");
+// 💻 LIVE CASHIER
+db.ref("orders").on("value", snapshot => {
+    let data = snapshot.val();
+    let box = document.getElementById("orders");
     box.innerHTML = "";
 
-    let total = 0;
-
-    cart.forEach(item => {
-        total += item.price * item.qty;
-
+    for(let id in data){
         box.innerHTML += `
         <div class="card">
-            <b>${item.name}</b><br>
-            RM ${(item.price * item.qty).toFixed(2)}<br>
+            <b>${data[id].item}</b><br>
+            RM ${data[id].price}<br>
+            <small>${data[id].time}</small><br>
 
-            <button class="plus" onclick="add('${item.name}',${item.price})">+</button>
-
-            <button class="minus" onclick="
-                if(item.qty>1){item.qty--}else{remove('${item.name}')}
-                save(); render();
-            ">-</button>
-
-            <button class="delete" onclick="remove('${item.name}')">Delete</button>
+            <button class="deleteBtn" onclick="delOrder('${id}')">Delete</button>
         </div>
         `;
-    });
+    }
+});
 
-    document.getElementById("total").innerText =
-        "Total: RM " + total.toFixed(2);
+// 🗑 DELETE ORDER
+function delOrder(id){
+    db.ref("orders/" + id).remove();
 }
 
-/* FONT SIZE FUNCTION */
-function changeFont(size){
-    document.body.style.fontSize = size + "px";
-}
-
-function clearCart(){
-    cart = [];
-    save();
-    render();
-}
-
-render();
 </script>
 
 </body>
